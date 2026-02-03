@@ -13,15 +13,15 @@ export const getProducts = (req, res) => {
   )
 }
 
-/* ADD PRODUCT */
+/* ADD */
 export const addProduct = (req, res) => {
   const { category_id, name, description, price, stock } = req.body
   const image = req.file ? req.file.filename : null
 
   db.query(
     `INSERT INTO products
-     (category_id, name, description, price, image, stock)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     (category_id,name,description,price,image,stock)
+     VALUES (?,?,?,?,?,?)`,
     [category_id, name, description, price, image, stock],
     (err) => {
       if (err) return res.status(500).json(err)
@@ -30,10 +30,41 @@ export const addProduct = (req, res) => {
   )
 }
 
-/* DELETE PRODUCT */
+/* UPDATE */
+export const updateProduct = (req, res) => {
+  const { id } = req.params
+  const { category_id, name, description, price, stock } = req.body
+  const image = req.file ? req.file.filename : null
+
+  if (image) {
+    db.query(
+      `UPDATE products
+       SET category_id=?,name=?,description=?,price=?,image=?,stock=?
+       WHERE id=?`,
+      [category_id, name, description, price, image, stock, id],
+      (err) => {
+        if (err) return res.status(500).json(err)
+        res.json({ message: "Updated with image" })
+      }
+    )
+  } else {
+    db.query(
+      `UPDATE products
+       SET category_id=?,name=?,description=?,price=?,stock=?
+       WHERE id=?`,
+      [category_id, name, description, price, stock, id],
+      (err) => {
+        if (err) return res.status(500).json(err)
+        res.json({ message: "Updated" })
+      }
+    )
+  }
+}
+
+/* DELETE */
 export const deleteProduct = (req, res) => {
   db.query("DELETE FROM products WHERE id=?", [req.params.id], (err) => {
     if (err) return res.status(500).json(err)
-    res.json({ message: "Product deleted successfully" })
+    res.json({ message: "Deleted successfully" })
   })
 }

@@ -4,6 +4,7 @@ import axios from "axios"
 function AdminProducts() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
+  const [editId, setEditId] = useState(null)
 
   const [form, setForm] = useState({
     category_id: "",
@@ -14,9 +15,9 @@ function AdminProducts() {
     stock: ""
   })
 
-  /* LOAD DATA */
+  /* LOAD ON PAGE START */
   useEffect(() => {
-    const loadData = async () => {
+    const fetchData = async () => {
       const c = await axios.get("http://localhost:5000/api/categories")
       const p = await axios.get("http://localhost:5000/api/products")
 
@@ -24,26 +25,29 @@ function AdminProducts() {
       setProducts(p.data)
     }
 
-    loadData()
+    fetchData()
   }, [])
 
-  /* ADD PRODUCT */
-  const handleAdd = async (e) => {
+  /* REFRESH PRODUCTS ONLY */
+  const refreshProducts = async () => {
+    const p = await axios.get("http://localhost:5000/api/products")
+    setProducts(p.data)
+  }
+
+  /* ADD OR UPDATE */
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     const data = new FormData()
+    Object.keys(form).forEach(key => data.append(key, form[key]))
 
-    data.append("category_id", form.category_id)
-    data.append("name", form.name)
-    data.append("description", form.description)
-    data.append("price", form.price)
-    data.append("stock", form.stock)
-    data.append("image", form.image)
+    if (editId) {
+      await axios.put(`http://localhost:5000/api/products/${editId}`, data)
+    } else {
+      await axios.post("http://localhost:5000/api/products", data)
+    }
 
-    await axios.post("http://localhost:5000/api/products", data)
-
-    const p = await axios.get("http://localhost:5000/api/products")
-    setProducts(p.data)
+    setEditId(null)
 
     setForm({
       category_id: "",
@@ -53,20 +57,35 @@ function AdminProducts() {
       image: null,
       stock: ""
     })
+
+    refreshProducts()
   }
 
   /* DELETE */
   const handleDelete = async (id) => {
     await axios.delete(`http://localhost:5000/api/products/${id}`)
-    const p = await axios.get("http://localhost:5000/api/products")
-    setProducts(p.data)
+    refreshProducts()
+  }
+
+  /* EDIT */
+  const handleEdit = (p) => {
+    setEditId(p.id)
+
+    setForm({
+      category_id: p.category_id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      image: null,
+      stock: p.stock
+    })
   }
 
   return (
     <div>
       <h2>Admin Products</h2>
 
-      <form onSubmit={handleAdd}>
+      <form onSubmit={handleSubmit}>
         <select
           value={form.category_id}
           onChange={e => setForm({ ...form, category_id: e.target.value })}
@@ -111,7 +130,7 @@ function AdminProducts() {
           onChange={e => setForm({ ...form, stock: e.target.value })}
         /><br /><br />
 
-        <button>Add Product</button>
+        <button>{editId ? "Update Product" : "Add Product"}</button>
       </form>
 
       <hr />
@@ -120,10 +139,12 @@ function AdminProducts() {
         <div key={p.id}>
           <img
             src={`http://localhost:5000/uploads/${p.image}`}
-            width="80"
+            width="70"
             alt=""
           />
-          <b> {p.name}</b> ({p.category}) - ₹{p.price}
+          <b> {p.name}</b> ({p.category}) ₹{p.price}
+
+          <button onClick={() => handleEdit(p)}>Edit</button>
           <button onClick={() => handleDelete(p.id)}>Delete</button>
         </div>
       ))}
