@@ -11,6 +11,8 @@ import AdminLogin from "./admin/AdminLogin"
 import AdminRegister from "./admin/AdminRegister"
 import AdminDashboard from "./admin/AdminDashboard"
 import AdminProducts from "./admin/AdminProducts"
+import AdminOrders from "./admin/AdminOrders"
+import AdminReviews from "./admin/AdminReviews"
 
 function App() {
   return (
@@ -27,6 +29,10 @@ function App() {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/categories" element={<AdminCategories />} />
       <Route path="/admin/products" element={<AdminProducts />} />
+      <Route path="/admin/orders" element={<AdminOrders />} />
+
+<Route path="/admin/reviews" element={<AdminReviews />} />
+
     </Routes>
   )
 }

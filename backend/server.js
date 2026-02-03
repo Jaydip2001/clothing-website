@@ -6,6 +6,8 @@ import productRoutes from "./routes/productRoutes.js"
 import authRoutes from "./routes/authRoutes.js"
 import adminAuthRoutes from "./routes/adminAuthRoutes.js"
 import categoryRoutes from "./routes/categoryRoutes.js"
+import orderRoutes from "./routes/orderRoutes.js"
+import reviewRoutes from "./routes/reviewRoutes.js"
 
 
 
@@ -28,6 +30,11 @@ app.use("/api/auth", authRoutes)
 app.use("/api/admin", adminAuthRoutes)
 app.use("/api/categories", categoryRoutes)
 app.use("/uploads", express.static("uploads"))
+
+app.use("/api/orders", orderRoutes)
+
+app.use("/api/reviews", reviewRoutes)
+
 
 
 
