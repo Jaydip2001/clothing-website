@@ -61,7 +61,6 @@ export const updateCategory = (req, res) => {
 export const deleteCategory = (req, res) => {
   const { id } = req.params
 
-<<<<<<< HEAD
   // 1️⃣ Check if category is used
   db.query(
     "SELECT COUNT(*) AS total FROM products WHERE category_id = ?",
@@ -89,14 +88,3 @@ export const deleteCategory = (req, res) => {
 }
 
 
-=======
-  db.query(
-    "DELETE FROM categories WHERE id = ?",
-    [id],
-    (err) => {
-      if (err) return res.status(500).json(err)
-      res.json({ message: "Category deleted successfully" })
-    }
-  )
-}
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029

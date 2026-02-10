@@ -1,17 +1,11 @@
 import { useState } from "react"
 import axios from "axios"
-<<<<<<< HEAD
 import { Link, useNavigate } from "react-router-dom"
-=======
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
 
 function AdminLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-<<<<<<< HEAD
   const navigate = useNavigate()
-=======
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -22,7 +16,6 @@ function AdminLogin() {
         { email, password }
       )
 
-<<<<<<< HEAD
       // ✅ SAVE ADMIN SESSION
       localStorage.setItem("admin", JSON.stringify(res.data.admin))
 
@@ -31,36 +24,14 @@ function AdminLogin() {
     } catch {
       alert("Invalid admin credentials")
     }
-=======
-      alert(res.data.message)
-      console.log(res.data.admin)
-    //   if you got error in err  used this code 
-//     catch {
-//   alert("Invalid admin credentials")
-// }
-
-    } catch (err) {
-  console.error(err.response?.data || err.message)
-  alert("Invalid admin credentials")
-}
-
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
   }
 
   return (
     <div>
-<<<<<<< HEAD
       <h1>Admin Login</h1>
 
       <form onSubmit={handleLogin}>
         <input
-=======
-      <h2>Admin Login</h2>
-
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
           placeholder="Admin Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -77,7 +48,6 @@ function AdminLogin() {
 
         <button type="submit">Login</button>
       </form>
-<<<<<<< HEAD
 
       <br />
 
@@ -96,8 +66,6 @@ function AdminLogin() {
           Register
         </Link>
       </p>
-=======
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
     </div>
   )
 }

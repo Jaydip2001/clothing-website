@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react"
-<<<<<<< HEAD
 import axios from "axios"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 function Products() {
   const [products, setProducts] = useState([])
   const location = useLocation()
+  const navigate = useNavigate()
 
   const query = new URLSearchParams(location.search)
   const categoryId = query.get("category")
 
+  /* ================= FETCH PRODUCTS ================= */
   useEffect(() => {
     const fetchProducts = async () => {
       const url = categoryId
@@ -23,25 +24,57 @@ function Products() {
     fetchProducts()
   }, [categoryId])
 
-  /* ===== TEMP ACTIONS (logic comes next) ===== */
+  /* ================= ADD TO CART (GUEST + USER) ================= */
   const addToCart = (product) => {
-    console.log("Add to cart:", product)
-    alert("Added to cart (logic coming next)")
+    const user = JSON.parse(localStorage.getItem("user"))
+
+    // 🧑 LOGGED-IN USER → DB CART (later sync)
+    if (user) {
+      axios.post("http://localhost:5000/api/cart/add", {
+        user_id: user.id,
+        product_id: product.id,
+        quantity: 1
+      })
+      alert("Added to cart")
+      return
+    }
+
+    // 👤 GUEST USER → LOCAL STORAGE CART
+    let cart = JSON.parse(localStorage.getItem("cart")) || []
+
+    const existing = cart.find(item => item.product_id === product.id)
+
+    if (existing) {
+      existing.quantity += 1
+    } else {
+      cart.push({
+        product_id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        quantity: 1
+      })
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart))
+    alert("Added to cart")
   }
 
+  /* ================= BUY NOW ================= */
   const buyNow = (product) => {
-    console.log("Buy now:", product)
-    alert("Buy now (checkout coming next)")
+    addToCart(product)
+    navigate("/cart")
   }
 
+  /* ================= WISHLIST (LATER) ================= */
   const addToWishlist = (product) => {
-    console.log("Wishlist:", product)
-    alert("Added to wishlist (logic coming next)")
+    alert(`Wishlist coming later ❤️ (${product.name})`)
   }
 
+  /* ================= UI ================= */
   return (
     <div>
-      <h1>Products</h1>
+      <h1>All Products</h1>
 
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
         {products.map((p) => (
@@ -66,11 +99,16 @@ function Products() {
             <h3>{p.name}</h3>
             <p>₹{p.price}</p>
 
-            {/* ACTION BUTTONS */}
-            <button onClick={() => addToCart(p)}>Add to Cart</button>
+            <button onClick={() => addToCart(p)}>
+              Add to Cart
+            </button>
+
             <br /><br />
 
-            <button onClick={() => buyNow(p)}>Buy Now</button>
+            <button onClick={() => buyNow(p)}>
+              Buy Now
+            </button>
+
             <br /><br />
 
             <button onClick={() => addToWishlist(p)}>
@@ -79,27 +117,6 @@ function Products() {
           </div>
         ))}
       </div>
-=======
-import { getProducts } from "../services/productService"
-
-function Products() {
-  const [products, setProducts] = useState([])
-
-  useEffect(() => {
-    getProducts().then(res => setProducts(res.data))
-  }, [])
-
-  return (
-    <div>
-      <h2>Our Products</h2>
-      {products.map(p => (
-        <div key={p.id}>
-          <h3>{p.name}</h3>
-          <p>₹{p.price}</p>
-          <img src={p.image} width="150" />
-        </div>
-      ))}
->>>>>>> fea072c0faff7e3482e200dfc9d6a834a3f26029
     </div>
   )
 }
