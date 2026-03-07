@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { useNavigate } from "react-router-dom"
+
 
 function Cart() {
   const [cartItems, setCartItems] = useState([])
   const user = JSON.parse(localStorage.getItem("user"))
-
+const navigator = useNavigate()
   /* ================= LOAD CART ================= */
   useEffect(() => {
     if (!user) {
@@ -177,7 +179,7 @@ function Cart() {
 
           <h2>Grand Total: ₹{total}</h2>
 
-          <button onClick={() => alert("Checkout next 🚀")}>
+          <button onClick={() => navigator("/checkout")}>
             Checkout
           </button>
         </>

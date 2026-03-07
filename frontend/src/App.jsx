@@ -7,7 +7,9 @@ import Categories from "./pages/Categories"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Cart from "./pages/Cart"
-
+import Wishlist from "./pages/Wishlist"
+import ProductDetails from "./pages/ProductDetails"
+import Checkout from "./pages/Checkout"
 // admin pages
 import AdminLogin from "./admin/AdminLogin"
 import AdminRegister from "./admin/AdminRegister"
@@ -17,6 +19,7 @@ import AdminProducts from "./admin/AdminProducts"
 import AdminOrders from "./admin/AdminOrders"
 import AdminReviews from "./admin/AdminReviews"
 import AdminInventory from "./admin/AdminInventory"
+import MyOrders from "./pages/MyOrders"
 
 // admin protection
 import AdminProtectedRoute from "./admin/AdminProtectedRoute"
@@ -31,7 +34,14 @@ function App() {
       <Route path="/cart" element={<Cart />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/product/:id" element={<ProductDetails />} />
+      <Route path="/checkout" element={<Checkout />} />
+      
+<Route path="/wishlist" element={<Wishlist />} />
 
+
+
+<Route path="/my-orders" element={<MyOrders />} />
       {/* ================= ADMIN PUBLIC ================= */}
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/register" element={<AdminRegister />} />

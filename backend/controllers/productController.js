@@ -1,9 +1,8 @@
 import { db } from "../config/db.js"
-import { addInventoryLog } from "./inventoryController.js"
 
-/* ================= GET PRODUCTS (ADMIN + USER) ================= */
+/* ================= GET ALL PRODUCTS ================= */
 export const getProducts = (req, res) => {
-  const { category } = req.query   // 👈 read category from URL
+  const { category } = req.query
 
   let sql = `
     SELECT p.*, c.name AS category
@@ -12,7 +11,6 @@ export const getProducts = (req, res) => {
   `
   const params = []
 
-  // ✅ USER SIDE FILTER
   if (category) {
     sql += " WHERE p.category_id = ?"
     params.push(category)
@@ -21,6 +19,28 @@ export const getProducts = (req, res) => {
   db.query(sql, params, (err, result) => {
     if (err) return res.status(500).json(err)
     res.json(result)
+  })
+}
+
+/* ================= GET SINGLE PRODUCT ================= */
+export const getSingleProduct = (req, res) => {
+  const { id } = req.params
+
+  const sql = `
+    SELECT p.*, c.name AS category
+    FROM products p
+    JOIN categories c ON p.category_id = c.id
+    WHERE p.id = ?
+  `
+
+  db.query(sql, [id], (err, result) => {
+    if (err) return res.status(500).json(err)
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "Product not found" })
+    }
+
+    res.json(result[0])
   })
 }
 
@@ -34,12 +54,8 @@ export const addProduct = (req, res) => {
      (category_id,name,description,price,image,stock)
      VALUES (?,?,?,?,?,?)`,
     [category_id, name, description, price, image, stock],
-    (err, result) => {
+    (err) => {
       if (err) return res.status(500).json(err)
-
-      // 🔥 INVENTORY LOG
-      addInventoryLog(result.insertId, "ADD", stock)
-
       res.json({ message: "Product added successfully" })
     }
   )
@@ -61,10 +77,6 @@ export const updateProduct = (req, res) => {
 
   db.query(sql, values, (err) => {
     if (err) return res.status(500).json(err)
-
-    // 🔥 INVENTORY LOG
-    addInventoryLog(id, "UPDATE", stock)
-
     res.json({ message: "Updated successfully" })
   })
 }

@@ -11,8 +11,8 @@ import reviewRoutes from "./routes/reviewRoutes.js"
 import inventoryRoutes from "./routes/inventoryRoutes.js"
 import dashboardRoutes from "./routes/dashboardRoutes.js"
 import cartRoutes from "./routes/cartRoutes.js"
-
-
+import wishlistRoutes from "./routes/wishlistRoutes.js"
+import addressRoutes from "./routes/addressRoutes.js"
 dotenv.config()
 const app = express()
 
@@ -45,5 +45,8 @@ app.use("/api/dashboard", dashboardRoutes)
 
 app.use("/api/cart", cartRoutes)
 
+app.use("/api/wishlist", wishlistRoutes)
+
+app.use("/api/address", addressRoutes)
 // Test DB connection
 

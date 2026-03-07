@@ -4,7 +4,8 @@ import {
   addProduct,
   getProducts,
   deleteProduct,
-  updateProduct
+  updateProduct,
+  getSingleProduct
 } from "../controllers/productController.js"
 
 const router = express.Router()
@@ -20,6 +21,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage })
 
 router.get("/", getProducts)
+router.get("/:id", getSingleProduct)   // ✅ SINGLE PRODUCT ROUTE
+
 router.post("/", upload.single("image"), addProduct)
 router.put("/:id", upload.single("image"), updateProduct)
 router.delete("/:id", deleteProduct)

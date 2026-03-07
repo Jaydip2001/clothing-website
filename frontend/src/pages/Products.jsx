@@ -27,7 +27,7 @@ function Products() {
   const addToCart = async (product) => {
     const user = JSON.parse(localStorage.getItem("user"))
 
-    // 🔹 GUEST USER
+    // 🔹 GUEST
     if (!user) {
       const guestCart =
         JSON.parse(localStorage.getItem("guestCart")) || []
@@ -39,10 +39,7 @@ function Products() {
       if (existing) {
         existing.quantity += 1
       } else {
-        guestCart.push({
-          product_id: product.id,
-          quantity: 1
-        })
+        guestCart.push({ product_id: product.id, quantity: 1 })
       }
 
       localStorage.setItem("guestCart", JSON.stringify(guestCart))
@@ -58,6 +55,41 @@ function Products() {
     })
 
     alert("Added to cart")
+  }
+
+  /* ================= ADD / REMOVE WISHLIST ================= */
+  const addToWishlist = async (product) => {
+    const user = JSON.parse(localStorage.getItem("user"))
+
+    // 🔹 GUEST
+    if (!user) {
+      let wishlist =
+        JSON.parse(localStorage.getItem("guestWishlist")) || []
+
+      const exists = wishlist.includes(product.id)
+
+      if (exists) {
+        wishlist = wishlist.filter(id => id !== product.id)
+        alert("Removed from wishlist")
+      } else {
+        wishlist.push(product.id)
+        alert("Added to wishlist")
+      }
+
+      localStorage.setItem(
+        "guestWishlist",
+        JSON.stringify(wishlist)
+      )
+      return
+    }
+
+    // 🔹 LOGGED-IN USER
+    await axios.post("http://localhost:5000/api/wishlist/toggle", {
+      user_id: user.id,
+      product_id: product.id
+    })
+
+    alert("Wishlist updated")
   }
 
   return (
@@ -89,6 +121,12 @@ function Products() {
 
             <button onClick={() => addToCart(p)}>
               Add to Cart
+            </button>
+
+            <br /><br />
+
+            <button onClick={() => addToWishlist(p)}>
+              ❤️ Wishlist
             </button>
           </div>
         ))}

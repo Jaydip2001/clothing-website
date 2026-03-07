@@ -1,6 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 
 function Login() {
   const [email, setEmail] = useState("")
@@ -16,16 +16,11 @@ function Login() {
         { email, password }
       )
 
-      // 🔥 MOST IMPORTANT LINE
       localStorage.setItem("user", JSON.stringify(res.data.user))
-
-      // optional: clear guest cart
-      localStorage.removeItem("guestCart")
-
       alert("Login successful")
-      navigate("/") // or /products or /cart
-    } catch  {
-      alert("Invalid email or password")
+      navigate("/")
+    } catch {
+      alert("Invalid credentials")
     }
   }
 
@@ -36,21 +31,30 @@ function Login() {
       <form onSubmit={handleLogin}>
         <input
           placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        /><br /><br />
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <br /><br />
 
         <input
           type="password"
           placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        /><br /><br />
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <br /><br />
 
         <button type="submit">Login</button>
       </form>
+
+      {/* ✅ REGISTER BUTTON ADDED HERE */}
+      <br />
+      <p>
+        Don't have an account?{" "}
+        <Link to="/register">
+          <button type="button">
+            Register
+          </button>
+        </Link>
+      </p>
     </div>
   )
 }
