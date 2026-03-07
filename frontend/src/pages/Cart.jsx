@@ -128,6 +128,9 @@ const navigator = useNavigate()
 
   return (
     <div>
+      <button onClick={() => navigator("/")}>
+  ⬅ Back to Home
+</button>
       <h1>Your Cart</h1>
 
       {cartItems.length === 0 ? (

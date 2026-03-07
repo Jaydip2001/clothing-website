@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import axios from "axios"
 
 function Wishlist() {
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const user = JSON.parse(localStorage.getItem("user"))
 
@@ -78,6 +80,9 @@ function Wishlist() {
 
   return (
     <div>
+     <button onClick={() => navigate("/")}>
+  ⬅ Back to Home
+</button>
       <h1>Your Wishlist</h1>
 
       {items.length === 0 ? (

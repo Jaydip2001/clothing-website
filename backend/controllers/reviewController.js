@@ -32,6 +32,26 @@ export const getReviews = (req, res) => {
 }
 
 
+/* GET REVIEWS BY PRODUCT (Public) */
+export const getProductReviews = (req, res) => {
+  const { product_id } = req.params
+
+  db.query(
+    `SELECT r.id, r.rating, r.comment, r.admin_reply, r.created_at,
+            u.name AS user_name
+     FROM reviews r
+     JOIN users u ON r.user_id = u.id
+     WHERE r.product_id = ?
+     ORDER BY r.id DESC`,
+    [product_id],
+    (err, result) => {
+      if (err) return res.status(500).json(err)
+      res.json(result)
+    }
+  )
+}
+
+
 /* ADMIN REPLY */
 export const replyReview = (req, res) => {
   const { id } = req.params
