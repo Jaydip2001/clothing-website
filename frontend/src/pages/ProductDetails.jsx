@@ -1,392 +1,320 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 import { useParams, useNavigate } from "react-router-dom"
+import "./user-css/productdetails.css"
 
 function ProductDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
-
-  const [product, setProduct] = useState(null)
-  const [quantity, setQuantity] = useState(1)
-
   const user = JSON.parse(localStorage.getItem("user"))
 
-  /* ================= REVIEWS STATE ================= */
-  const [reviews, setReviews] = useState([])
-  const [rating, setRating] = useState(5)
-  const [comment, setComment] = useState("")
+  const [product, setProduct]   = useState(null)
+  const [quantity, setQuantity] = useState(1)
+  const [reviews, setReviews]   = useState([])
+  const [rating, setRating]     = useState(5)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [comment, setComment]   = useState("")
+  const [selectedSize, setSelectedSize] = useState("")
+  const [activeImg, setActiveImg] = useState(0)
 
-
-  /* ================= FETCH PRODUCT ================= */
+  /* ── FETCH PRODUCT ── */
   useEffect(() => {
-    const fetchProduct = async () => {
-      const res = await axios.get(
-        `http://localhost:5000/api/products/${id}`
-      )
-      setProduct(res.data)
-    }
-
-    fetchProduct()
+    axios.get(`http://localhost:5000/api/products/${id}`)
+      .then(res => setProduct(res.data))
   }, [id])
 
-
-  /* ================= FETCH REVIEWS ================= */
+  /* ── FETCH REVIEWS ── */
   const fetchReviews = async () => {
-    const res = await axios.get(
-      `http://localhost:5000/api/reviews/product/${id}`
-    )
+    const res = await axios.get(`http://localhost:5000/api/reviews/product/${id}`)
     setReviews(res.data)
   }
+  useEffect(() => { fetchReviews() }, [id])
 
-  useEffect(() => {
-    fetchReviews()
-  }, [id])
+  /* ── AVG RATING ── */
+  const avgRating = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
 
-
-  /* ================= SUBMIT REVIEW ================= */
-  const submitReview = async () => {
-
-    if (!user) {
-      alert("Please login to submit a review")
-      return
-    }
-
-    if (!comment.trim()) {
-      alert("Please write a comment")
-      return
-    }
-
-    try {
-      await axios.post("http://localhost:5000/api/reviews/add", {
-        product_id: id,
-        user_id: user.id,
-        rating,
-        comment
-      })
-
-      setComment("")
-      setRating(5)
-      fetchReviews()   // ✅ refresh reviews after submit
-
-    } catch (err) {
-      alert("Failed to submit review")
-    }
+  const renderStars = (n) => {
+    const f = Math.round(n || 0)
+    return "★".repeat(f) + "☆".repeat(5 - f)
   }
 
+  /* ── SUBMIT REVIEW ── */
+  const submitReview = async () => {
+    if (!user)          { alert("Please login to submit a review"); return }
+    if (!comment.trim()) { alert("Please write a comment"); return }
+    try {
+      await axios.post("http://localhost:5000/api/reviews/add", {
+        product_id: id, user_id: user.id, rating, comment
+      })
+      setComment(""); setRating(5)
+      fetchReviews()
+    } catch { alert("Failed to submit review") }
+  }
 
-  /* ================= ADD TO CART ================= */
+  /* ── ADD TO CART ── */
   const addToCart = async () => {
     if (!product) return
 
-    if (!user) {
-      let guestCart =
-        JSON.parse(localStorage.getItem("guestCart")) || []
-
-      const existing = guestCart.find(
-        item => item.product_id === product.id
-      )
-
-      if (existing) {
-        existing.quantity += quantity
-      } else {
-        guestCart.push({
-          product_id: product.id,
-          quantity: quantity
-        })
-      }
-
-      localStorage.setItem("guestCart", JSON.stringify(guestCart))
-      alert("Added to cart 🛒")
+    // if product has sizes, size must be selected
+    if (product.sizes && !selectedSize) {
+      alert("Please select a size first")
       return
     }
 
+    if (!user) {
+      const cart = JSON.parse(localStorage.getItem("guestCart") || "[]")
+      // same product + same size = same item, different size = different item
+      const existing = cart.find(i => i.product_id === product.id && i.size === (selectedSize || null))
+      if (existing) existing.quantity += quantity
+      else cart.push({ product_id: product.id, quantity, size: selectedSize || null })
+      localStorage.setItem("guestCart", JSON.stringify(cart))
+      window.dispatchEvent(new Event("cartUpdated"))
+      alert("Added to cart!")
+      return
+    }
     await axios.post("http://localhost:5000/api/cart/add", {
-      user_id: user.id,
-      product_id: product.id,
-      quantity: quantity
+      user_id: user.id, product_id: product.id, quantity, size: selectedSize || null
     })
-
-    alert("Added to cart 🛒")
+    window.dispatchEvent(new Event("cartUpdated"))
+    alert("Added to cart!")
   }
 
-
-  /* ================= ADD TO WISHLIST ================= */
+  /* ── ADD TO WISHLIST ── */
   const addToWishlist = async () => {
     if (!product) return
-
     if (!user) {
-      let guestWishlist =
-        JSON.parse(localStorage.getItem("guestWishlist")) || []
-
-      const exists = guestWishlist.some(
-        item => item.product_id === product.id
-      )
-
-      if (exists) {
-        alert("Already in wishlist ❤️")
-        return
-      }
-
-      guestWishlist.push({ product_id: product.id })
-      localStorage.setItem("guestWishlist", JSON.stringify(guestWishlist))
-      alert("Added to wishlist ❤️")
+      const w = JSON.parse(localStorage.getItem("guestWishlist") || "[]")
+      if (w.some(i => i.product_id === product.id)) { alert("Already in wishlist"); return }
+      w.push({ product_id: product.id })
+      localStorage.setItem("guestWishlist", JSON.stringify(w))
+      window.dispatchEvent(new Event("wishlistUpdated"))
+      alert("Added to wishlist!")
       return
     }
-
     try {
-      await axios.post("http://localhost:5000/api/wishlist/add", {
-        user_id: user.id,
-        product_id: product.id
-      })
-      alert("Added to wishlist ❤️")
-    } catch {
-      alert("Already in wishlist ❤️")
-    }
+      await axios.post("http://localhost:5000/api/wishlist/add", { user_id: user.id, product_id: product.id })
+      window.dispatchEvent(new Event("wishlistUpdated"))
+      alert("Added to wishlist!")
+    } catch { alert("Already in wishlist") }
   }
 
-
-  if (!product) return <h2>Loading...</h2>
+  if (!product) return <div className="pd-loading">Loading...</div>
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div className="pd-page">
 
-      {/* ================= PRODUCT SECTION ================= */}
-      <div style={{ display: "flex", gap: "40px" }}>
+      {/* ── BREADCRUMB ── */}
+      <div className="pd-breadcrumb">
+        <span className="pd-breadcrumb-link" onClick={() => navigate("/")}>Home</span>
+        <span className="pd-breadcrumb-sep">›</span>
+        {product.category && (
+          <>
+            <span className="pd-breadcrumb-link"
+              onClick={() => navigate(`/products?category=${product.category_id}`)}>
+              {product.category}
+            </span>
+            <span className="pd-breadcrumb-sep">›</span>
+          </>
+        )}
+        <span className="pd-breadcrumb-current">{product.name}</span>
+      </div>
 
-        {/* LEFT — IMAGE */}
-        <div style={{ flex: 1 }}>
-          <img
-            src={`http://localhost:5000/uploads/${product.image}`}
-            alt={product.name}
-            width="100%"
-            style={{ maxWidth: "400px" }}
-          />
+      {/* ── MAIN — IMAGE + INFO ── */}
+      <div className="pd-main">
+
+        {/* LEFT — IMAGE GALLERY */}
+        <div className="pd-image-wrap">
+          {/* Main image */}
+          <div className="pd-main-img">
+            <img
+              src={`http://localhost:5000/uploads/${
+                product.images && product.images.length > 0
+                  ? product.images[activeImg]?.image
+                  : product.image
+              }`}
+              alt={product.name}
+            />
+          </div>
+          {/* Thumbnails — only show if multiple images */}
+          {product.images && product.images.length > 1 && (
+            <div className="pd-thumbnails">
+              {product.images.map((img, i) => (
+                <div
+                  key={img.id}
+                  className={`pd-thumb ${activeImg === i ? "active" : ""}`}
+                  onClick={() => setActiveImg(i)}
+                >
+                  <img src={`http://localhost:5000/uploads/${img.image}`} alt={`view ${i + 1}`} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* RIGHT — DETAILS */}
-        <div style={{ flex: 1 }}>
-          <h2>{product.name}</h2>
-          <h3 style={{ color: "green" }}>₹{product.price}</h3>
+        <div className="pd-info">
 
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            High quality fabric. Premium design. Comfortable fit.
+          {product.category && (
+            <span className="pd-category-tag">{product.category}
+              {product.subcategory && ` › ${product.subcategory}`}
+            </span>
+          )}
+
+          <h1 className="pd-name">{product.name}</h1>
+          <p className="pd-price">₹{product.price}</p>
+
+          {/* avg rating */}
+          {avgRating && (
+            <div className="pd-rating-summary">
+              <span className="pd-rating-stars">{renderStars(avgRating)}</span>
+              <span className="pd-rating-text">{avgRating} / 5 · {reviews.length} review{reviews.length !== 1 ? "s" : ""}</span>
+            </div>
+          )}
+
+          <p className="pd-description">
+            {product.description || "High quality fabric. Premium design. Comfortable fit. A timeless piece for your wardrobe."}
           </p>
 
+          {/* SIZES */}
+          {product.sizes && (
+            <div style={{ marginBottom: "28px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--dark-gray)", marginBottom: "12px" }}>
+                Select Size
+                {selectedSize
+                  ? <span style={{ color: "var(--accent)", marginLeft: "8px" }}>— {selectedSize}</span>
+                  : <span style={{ color: "var(--danger)", marginLeft: "8px", fontWeight: 400, letterSpacing: 0, textTransform: "none", fontSize: "11px" }}>* Required</span>
+                }
+              </p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {product.sizes.split(",").map(s => s.trim()).filter(Boolean).map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size === selectedSize ? "" : size)}
+                    style={{
+                      minWidth: "48px", height: "48px", padding: "0 12px",
+                      border: `1.5px solid ${selectedSize === size ? "var(--black)" : "#d8d8d8"}`,
+                      background: selectedSize === size ? "var(--black)" : "var(--white)",
+                      color: selectedSize === size ? "var(--white)" : "var(--black)",
+                      fontFamily: "var(--font-body)", fontSize: "12px",
+                      fontWeight: 700, cursor: "pointer",
+                      borderRadius: "2px", transition: "all 0.2s"
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* QUANTITY */}
-          <div style={{ marginBottom: "20px" }}>
-            <label style={{ marginRight: "10px" }}>Quantity:</label>
-
-            <button onClick={() => quantity > 1 && setQuantity(quantity - 1)}>
-              -
-            </button>
-
-            <span style={{ margin: "0 15px" }}>{quantity}</span>
-
-            <button onClick={() => setQuantity(quantity + 1)}>
-              +
-            </button>
+          <div className="pd-qty-row">
+            <span className="pd-qty-label">Quantity</span>
+            <div className="pd-qty-controls">
+              <button className="pd-qty-btn" onClick={() => quantity > 1 && setQuantity(q => q - 1)} disabled={quantity <= 1}>−</button>
+              <span className="pd-qty-num">{quantity}</span>
+              <button className="pd-qty-btn" onClick={() => setQuantity(q => q + 1)}>+</button>
+            </div>
           </div>
 
           {/* BUTTONS */}
-          <button
-            onClick={addToCart}
-            style={{
-              background: "#f0c14b",
-              padding: "10px 20px",
-              border: "none",
-              cursor: "pointer",
-              marginBottom: "10px"
-            }}
-          >
-            🛒 Add to Cart
-          </button>
+          <div className="pd-actions">
+            <button className="pd-btn-cart" onClick={addToCart}>Add to Bag</button>
+            <button className="pd-btn-buynow" onClick={() =>
+              navigate("/checkout", { state: { product, quantity } })
+            }>
+              Buy Now
+            </button>
+            <button className="pd-btn-wish" onClick={addToWishlist}>
+              ♡ &nbsp; Add to Wishlist
+            </button>
+          </div>
 
-          <br />
-
-          <button
-            onClick={() =>
-              navigate("/checkout", {
-                state: { product: product, quantity: quantity }
-              })
-            }
-            style={{
-              background: "orange",
-              padding: "10px 20px",
-              border: "none",
-              cursor: "pointer",
-              marginBottom: "10px"
-            }}
-          >
-            Buy Now
-          </button>
-
-          <br />
-
-          <button
-            onClick={addToWishlist}
-            style={{
-              padding: "10px 20px",
-              border: "1px solid #ccc",
-              cursor: "pointer"
-            }}
-          >
-            ❤️ Add to Wishlist
-          </button>
-
-          <br /><br />
-
-          <button onClick={() => navigate("/")}>
-            ⬅ Back to Home
+          <button className="pd-back-link" onClick={() => navigate(-1)}>
+            ← Back
           </button>
         </div>
       </div>
 
+      <hr className="pd-divider" />
 
-      <hr style={{ margin: "40px 0" }} />
+      {/* ── REVIEWS ── */}
+      <div className="pd-reviews">
+        <div className="pd-reviews-header">
+          <h2 className="pd-reviews-title">
+            Customer <span>Reviews</span>
+          </h2>
+          <span className="pd-reviews-count">{reviews.length} review{reviews.length !== 1 ? "s" : ""}</span>
+        </div>
 
-
-      {/* ================= REVIEWS SECTION ================= */}
-      <div>
-        <h2>Customer Reviews ({reviews.length})</h2>
-
-        {/* ===== SHOW REVIEWS ===== */}
+        {/* LIST */}
         {reviews.length === 0 ? (
-
-          <p style={{ color: "gray" }}>
-            No reviews yet. Be the first to review!
-          </p>
-
+          <p className="pd-no-reviews">No reviews yet — be the first to share your experience!</p>
         ) : (
+          <div className="pd-review-list">
+            {reviews.map(r => (
+              <div key={r.id} className="pd-review-card">
+                <div className="pd-review-top">
+                  <span className="pd-review-stars">{renderStars(r.rating)}</span>
+                  <span className="pd-review-date">{new Date(r.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="pd-review-author">{r.user_name}</p>
+                <p className="pd-review-comment">{r.comment}</p>
+                {r.admin_reply && (
+                  <div className="pd-review-reply">
+                    <b>🏪 Store Reply:</b> {r.admin_reply}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
-          reviews.map(r => (
-            <div
-              key={r.id}
-              style={{
-                border: "1px solid #eee",
-                borderRadius: "8px",
-                padding: "15px",
-                marginBottom: "15px",
-                background: "#fafafa"
-              }}
-            >
+        {/* WRITE REVIEW */}
+        <div className="pd-write-review">
+          <h3 className="pd-write-review-title">Write a Review</h3>
+
+          {!user ? (
+            <p className="pd-login-prompt">
+              Please <b onClick={() => navigate("/login")}>sign in</b> to write a review.
+            </p>
+          ) : (
+            <>
               {/* STARS */}
-              <div style={{ color: "#f5a623", fontSize: "18px" }}>
-                {"⭐".repeat(r.rating)}
-                <span style={{ color: "#333", fontSize: "14px", marginLeft: "8px" }}>
-                  {r.rating}/5
-                </span>
+              <div className="pd-star-row">
+                <span className="pd-star-label">Your Rating</span>
+                <div className="pd-star-picker">
+                  {[1,2,3,4,5].map(star => (
+                    <span
+                      key={star}
+                      className={star <= (hoverRating || rating) ? "pd-star-active" : "pd-star-inactive"}
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                    >★</span>
+                  ))}
+                </div>
               </div>
 
-              {/* USER & DATE */}
-              <p style={{ fontWeight: "bold", margin: "5px 0" }}>
-                {r.user_name}
-                <span style={{ fontWeight: "normal", color: "gray", fontSize: "13px", marginLeft: "10px" }}>
-                  {new Date(r.created_at).toLocaleDateString()}
-                </span>
-              </p>
-
               {/* COMMENT */}
-              <p style={{ margin: "5px 0" }}>{r.comment}</p>
+              <textarea
+                className="pd-textarea"
+                placeholder="Share your experience with this product..."
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                rows={4}
+              />
 
-              {/* ADMIN REPLY */}
-              {r.admin_reply && (
-                <div style={{
-                  background: "#e8f4fd",
-                  borderLeft: "3px solid #2196F3",
-                  padding: "8px 12px",
-                  marginTop: "8px",
-                  borderRadius: "4px"
-                }}>
-                  <b>🏪 Store Reply:</b> {r.admin_reply}
-                </div>
-              )}
-            </div>
-          ))
-
-        )}
-
-
-        <hr style={{ margin: "30px 0" }} />
-
-
-        {/* ===== WRITE A REVIEW ===== */}
-        <h3>Write a Review</h3>
-
-        {!user ? (
-
-          <p style={{ color: "gray" }}>
-            Please <b
-              style={{ cursor: "pointer", color: "blue" }}
-              onClick={() => navigate("/login")}
-            >
-              login
-            </b> to write a review.
-          </p>
-
-        ) : (
-
-          <div>
-
-            {/* STAR RATING */}
-            <div style={{ marginBottom: "10px" }}>
-              <label style={{ marginRight: "10px" }}>Rating:</label>
-              {[1, 2, 3, 4, 5].map(star => (
-                <span
-                  key={star}
-                  onClick={() => setRating(star)}
-                  style={{
-                    fontSize: "24px",
-                    cursor: "pointer",
-                    color: star <= rating ? "#f5a623" : "#ccc"
-                  }}
-                >
-                  ★
-                </span>
-              ))}
-              <span style={{ marginLeft: "10px", color: "gray" }}>
-                {rating}/5
-              </span>
-            </div>
-
-            {/* COMMENT */}
-            <textarea
-              placeholder="Share your experience with this product..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={4}
-              style={{
-                width: "100%",
-                maxWidth: "500px",
-                padding: "10px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-                fontSize: "14px"
-              }}
-            />
-
-            <br /><br />
-
-            <button
-              onClick={submitReview}
-              style={{
-                background: "#2196F3",
-                color: "white",
-                padding: "10px 25px",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "15px"
-              }}
-            >
-              Submit Review ✅
-            </button>
-
-          </div>
-
-        )}
-
+              <button className="pd-submit-btn" onClick={submitReview}>
+                Submit Review
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
     </div>
   )
 }

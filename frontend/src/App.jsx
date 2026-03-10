@@ -20,11 +20,13 @@ import AdminOrders from "./admin/AdminOrders"
 import AdminReviews from "./admin/AdminReviews"
 import AdminInventory from "./admin/AdminInventory"
 import MyOrders from "./pages/MyOrders"
+import AdminUsers from "./admin/AdminUsers"
+import Profile from "./pages/Profile"
 
 // admin protection
 import AdminProtectedRoute from "./admin/AdminProtectedRoute"
 
-function App() {
+function App() { 
   return (
     <Routes>
       {/* ================= USER ROUTES ================= */}
@@ -36,7 +38,8 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/product/:id" element={<ProductDetails />} />
       <Route path="/checkout" element={<Checkout />} />
-      
+
+<Route path="/profile" element={<Profile />} />
 <Route path="/wishlist" element={<Wishlist />} />
 
 
@@ -46,6 +49,7 @@ function App() {
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/register" element={<AdminRegister />} />
 
+<Route path="/admin/users" element={<AdminUsers />} />
       {/* ================= ADMIN PROTECTED ================= */}
       <Route
         path="/admin"

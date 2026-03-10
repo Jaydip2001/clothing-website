@@ -1,25 +1,26 @@
 import { db } from "../config/db.js"
 
-/* ================= ADD TO CART (LOGGED-IN USER) ================= */
+/* ================= ADD TO CART ================= */
 export const addToCart = (req, res) => {
-  const { user_id, product_id, quantity } = req.body
+  const { user_id, product_id, quantity, size } = req.body
 
+  // same product + same size = same row, different size = new row
   db.query(
-    "SELECT * FROM cart WHERE user_id=? AND product_id=?",
-    [user_id, product_id],
+    "SELECT * FROM cart WHERE user_id=? AND product_id=? AND size <=> ?",
+    [user_id, product_id, size || null],
     (err, result) => {
       if (err) return res.status(500).json(err)
 
       if (result.length > 0) {
         db.query(
-          "UPDATE cart SET quantity = quantity + ? WHERE user_id=? AND product_id=?",
-          [quantity, user_id, product_id],
+          "UPDATE cart SET quantity = quantity + ? WHERE user_id=? AND product_id=? AND size <=> ?",
+          [quantity, user_id, product_id, size || null],
           () => res.json({ message: "Cart updated" })
         )
       } else {
         db.query(
-          "INSERT INTO cart (user_id, product_id, quantity) VALUES (?,?,?)",
-          [user_id, product_id, quantity],
+          "INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?,?,?,?)",
+          [user_id, product_id, quantity, size || null],
           () => res.json({ message: "Added to cart" })
         )
       }
@@ -35,6 +36,7 @@ export const getCart = (req, res) => {
     SELECT 
       c.id,
       c.quantity,
+      c.size,
       p.id AS product_id,
       p.name,
       p.price,
@@ -60,22 +62,20 @@ export const mergeGuestCart = (req, res) => {
 
   cartItems.forEach(item => {
     db.query(
-      "SELECT * FROM cart WHERE user_id=? AND product_id=?",
-      [user_id, item.product_id],
+      "SELECT * FROM cart WHERE user_id=? AND product_id=? AND size <=> ?",
+      [user_id, item.product_id, item.size || null],
       (err, result) => {
         if (err) return
 
         if (result.length > 0) {
-          // already exists → increase quantity
           db.query(
-            "UPDATE cart SET quantity = quantity + ? WHERE user_id=? AND product_id=?",
-            [item.quantity, user_id, item.product_id]
+            "UPDATE cart SET quantity = quantity + ? WHERE user_id=? AND product_id=? AND size <=> ?",
+            [item.quantity, user_id, item.product_id, item.size || null]
           )
         } else {
-          // insert new product
           db.query(
-            "INSERT INTO cart (user_id, product_id, quantity) VALUES (?,?,?)",
-            [user_id, item.product_id, item.quantity]
+            "INSERT INTO cart (user_id, product_id, quantity, size) VALUES (?,?,?,?)",
+            [user_id, item.product_id, item.quantity, item.size || null]
           )
         }
       }
@@ -84,6 +84,7 @@ export const mergeGuestCart = (req, res) => {
 
   res.json({ message: "Guest cart merged successfully" })
 }
+
 /* ================= UPDATE CART QUANTITY ================= */
 export const updateCartQuantity = (req, res) => {
   const { cart_id, quantity } = req.body

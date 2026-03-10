@@ -20,11 +20,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-router.get("/", getProducts)
-router.get("/:id", getSingleProduct)   // ✅ SINGLE PRODUCT ROUTE
+router.get("/",     getProducts)
+router.get("/:id",  getSingleProduct)
 
-router.post("/", upload.single("image"), addProduct)
-router.put("/:id", upload.single("image"), updateProduct)
+// ✅ Changed from upload.single("image") to upload.array("images", 6)
+router.post("/",    upload.array("images", 6), addProduct)
+router.put("/:id",  upload.array("images", 6), updateProduct)
 router.delete("/:id", deleteProduct)
 
 export default router
